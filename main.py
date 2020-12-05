@@ -6,6 +6,8 @@ import keras
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
 import seaborn as sns
+from sklearn import model_selection
+from keras.utils.np_utils import to_categorical
 
 data = pd.read_csv('./heart.csv')
 # вывод первых 5 записей
@@ -31,7 +33,6 @@ age_thalach_values = data.groupby('age')['thalach'].count().values
 mean_thalach = []
 for i, age in enumerate(age_unique):
     mean_thalach.append(sum(data[data['age'] == age].thalach) / age_thalach_values[i])
-
 plt.figure(figsize=(10, 5))
 sns.pointplot(x=age_unique, y=mean_thalach, color='red', alpha=0.8)
 plt.xlabel('Возраст', fontsize=15, color='blue')
@@ -40,4 +41,20 @@ plt.ylabel('Максимальный пульс', fontsize=15, color='blue')
 plt.title('Возраст и максимальный пульс', fontsize=15, color='blue')
 plt.grid()
 plt.show()
+
+# Разделение данных на данные для обучения и тестирования.
+X = np.array(data.drop(['target'], 1))
+y = np.array(data['target'])
+# нормализация
+mean = X.mean(axis=0)
+X -= mean
+std = X.std(axis=0)
+X /= std
+
+# создание X и Y датасета для обучения
+X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, stratify=y, random_state=42, test_size=0.2)
+
+# преобразование данных в категориальные метки
+Y_train = to_categorical(y_train, num_classes=None)
+Y_test = to_categorical(y_test, num_classes=None)
 
