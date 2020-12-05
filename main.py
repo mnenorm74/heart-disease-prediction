@@ -8,6 +8,10 @@ from pandas.plotting import scatter_matrix
 import seaborn as sns
 from sklearn import model_selection
 from keras.utils.np_utils import to_categorical
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras import regularizers
 
 data = pd.read_csv('./heart.csv')
 # вывод первых 5 записей
@@ -58,3 +62,54 @@ X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, strati
 Y_train = to_categorical(y_train, num_classes=None)
 Y_test = to_categorical(y_test, num_classes=None)
 
+
+def create_model():
+    # create model
+    model = Sequential()
+    model.add(Dense(16, input_dim=13, kernel_initializer='normal', kernel_regularizer=regularizers.l2(0.001),
+                    activation='relu'))
+    model.add(Dropout(0.25))
+    model.add(Dense(8, kernel_initializer='normal', kernel_regularizer=regularizers.l2(0.001), activation='relu'))
+    model.add(Dropout(0.25))
+    model.add(Dense(2, activation='softmax'))
+
+    # компилирование модели
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
+
+
+model = create_model()
+print(model.summary())
+
+# обучение модели на тренировочных данных
+history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=10)
+
+model.evaluate(X_train, Y_train)
+model.evaluate(X_test, Y_test)
+
+# Точность модели
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Точность модели')
+plt.ylabel('Точность')
+plt.xlabel('Эпохи')
+plt.legend(['train', 'test'])
+plt.show()
+
+# Ошибка модели
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Ошибка модели')
+plt.ylabel('Ошибка')
+plt.xlabel('Эпохи')
+plt.legend(['train', 'test'])
+plt.show()
+
+# проверка на нулевом элементе
+x = np.expand_dims(X_train[0], axis=0)
+result = model.predict(x)
+print(np.argmax(result))
+# проверка на первом элементе
+x = np.expand_dims(X_train[1], axis=0)
+result = model.predict(x)
+print(np.argmax(result))
